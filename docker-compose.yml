@@ -1,0 +1,50 @@
+version: '3.7'
+
+services:
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: memes
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  minio:
+    image: minio/minio
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    ports:
+      - "9000:9000"
+    volumes:
+      - minio_data:/data
+    networks:
+      - backend
+
+  memes-api:
+    build: .
+    depends_on:
+      - db
+      - minio
+    volumes:
+      - .:/code
+    networks:
+      - backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://sasha:123@db/memes
+      MINIO_URL: http://minio:9000
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio123
+
+volumes:
+  postgres_data:
+  minio_data:
+
+networks:
+  backend:
